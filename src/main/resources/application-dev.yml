@@ -1,0 +1,30 @@
+server:
+  port: 8080
+
+spring:
+  datasource:
+    url: ${DB_URL:jdbc:h2:mem:testdb}
+    username: ${DB_USERNAME:sa}
+    password: ${DB_PASSWORD:}
+    driver-class-name: org.h2.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+  data:
+    mongodb:
+      uri: ${MONGO_URI:mongodb://localhost:27017/authdb}
+
+logging:
+  level:
+    root: INFO
+    org.springframework.security: DEBUG
+    com.neoutilix: DEBUG
+
+app:
+  jwt:
+    secret: ${JWT_SECRET:VGhpcy1pcy1kZXYtc2VjcmV0LXNob3VsZC1iZS1zaGExMjM0NTY=}
+    expiration-ms: 3600000
