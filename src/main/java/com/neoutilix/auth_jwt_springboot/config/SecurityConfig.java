@@ -1,9 +1,12 @@
 package com.neoutilix.auth_jwt_springboot.config;
 
 import com.neoutilix.auth_jwt_springboot.security.JwtAuthenticationFilter;
+import com.neoutilix.auth_jwt_springboot.security.CustomOAuth2UserService;
+import com.neoutilix.auth_jwt_springboot.security.OAuth2SuccessHandler;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -19,6 +22,7 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.List;
+import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 
 @Configuration
 @EnableMethodSecurity
@@ -27,22 +31,33 @@ public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final UserDetailsService userDetailsService;
+    private final CustomOAuth2UserService customOAuth2UserService;
+    private final OAuth2SuccessHandler oAuth2SuccessHandler;
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http
-                .csrf(csrf -> csrf.disable())
-                .cors(cors -> {
-                })
-                .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/", "/swagger-ui/**", "/v3/api-docs/**", "/api/auth/login", "/api/auth/register").permitAll()
-                .anyRequest().authenticated()
-                )
-                .userDetailsService(userDetailsService);
+    public SecurityFilterChain securityFilterChain(HttpSecurity http,
+                           ObjectProvider<ClientRegistrationRepository> clientRegistrationsProvider) throws Exception {
+    http
+        .csrf(csrf -> csrf.disable())
+        .cors(cors -> {})
+        .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+        .authorizeHttpRequests(auth -> auth
+            .requestMatchers("/", "/swagger-ui/**", "/v3/api-docs/**", "/api/auth/login", "/api/auth/register", "/oauth2/**").permitAll()
+            .anyRequest().authenticated()
+        )
+        .logout(logout -> logout.logoutUrl("/api/auth/logout").logoutSuccessHandler((req, res, auth) -> res.setStatus(204)))
+        .userDetailsService(userDetailsService);
 
-        http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
-        return http.build();
+    // Only configure OAuth2 login if client registrations are present (i.e., credentials configured)
+    if (clientRegistrationsProvider.getIfAvailable() != null) {
+        http.oauth2Login(oauth -> oauth
+            .userInfoEndpoint(u -> u.userService(customOAuth2UserService))
+            .successHandler(oAuth2SuccessHandler)
+        );
+    }
+
+    http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+    return http.build();
     }
 
     @Bean

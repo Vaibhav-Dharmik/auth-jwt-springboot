@@ -40,6 +40,13 @@ public class User {
     private String skills;
     private Integer profileCompletion;
 
+    // OAuth2 fields
+    @Column(length = 30)
+    private String provider; // google, github, local
+
+    @Column(unique = true, length = 150)
+    private String providerId; // sub (Google) or id (GitHub)
+
     @Builder.Default
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(name = "user_roles",

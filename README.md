@@ -5,6 +5,7 @@ Starter template for a Spring Boot (3.x) REST API with JWT authentication, role-
 ## Features
 
 - User registration & login (JWT)
+- OAuth2 social login (Google & GitHub) mapped into local user store
 - Role-based access control (ADMIN / USER) with `@PreAuthorize`
 - Stateless security, BCrypt password hashing
 - Global exception handling
@@ -54,12 +55,15 @@ Public:
 
 - POST `/api/auth/register`
 - POST `/api/auth/login`
+- GET `/oauth2/authorization/google` (Browser redirect)
+- GET `/oauth2/authorization/github` (Browser redirect)
 
 Protected:
 
 - GET `/api/dashboard`
 - GET `/api/profile`
 - GET `/api/admin/metrics` (ADMIN only)
+- POST `/api/auth/logout` (stateless hint: client just discards token)
 
 ## Adding a New Role
 
